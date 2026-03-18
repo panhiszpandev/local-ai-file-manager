@@ -28,6 +28,21 @@ feat: confidence scoring and classification fixes
 
 - Branch names should be short and descriptive (e.g. `threshold-experiment`, `pdf-support`)
 
+### Pull request description format
+PR title follows the same `type: short description` convention as commits.
+PR body lists the individual commits that made up the branch:
+
+```
+feat: improve image and PDF classification accuracy
+
+- refactor: split classifier into focused modules
+- feat: add two-step document analysis for images
+- feat: simplify taxonomy to single-level categories with descriptions
+- refactor: remove subcategory from data model, CSV output and CLI logs
+- fix: skip hidden files and directories in scanner
+- feat: fallback to Do przejrzenia when confidence below 90%
+```
+
 ## Language policy
 - All documentation, comments, code identifiers, prompts, and any text not directly representing user data (e.g. file names, paths) must be written in **English**
 - CSV column names and values that are not user-provided data (e.g. category names, action types) must also be in **English**
