@@ -7,6 +7,8 @@ from src.models import FileInfo
 
 def scan(root: Path) -> Iterator[FileInfo]:
     for entry in root.rglob("*"):
+        if entry.name.startswith("."):
+            continue
         try:
             stat = entry.stat()
         except (PermissionError, OSError):
