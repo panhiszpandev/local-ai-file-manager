@@ -1,83 +1,54 @@
-# File Classification Taxonomy (v1)
+# File Classification Taxonomy (v2)
 
-This taxonomy defines allowed categories and subcategories for file classification.
-AI MUST choose from this list only. If uncertain, use: `Do przejrzenia/Niepewne`.
+This taxonomy defines the allowed categories for file classification.
+AI MUST choose from this list only. If uncertain, use `Do przejrzenia`.
 
 ---
 
-## 1. Kariera
-- CV i profile
-- Aplikacje
-- Umowy
-- Certyfikaty
+## Categories
 
-## 2. Finanse
-- Bank
-- Faktury
-- Podatki
-- Paski wynagrodzeń
+**Kariera**
+CV, portfolia, cover letters, job applications, employment contracts, NDAs, professional certificates, diplomas, references, performance reviews.
 
-## 3. Zdrowie
-- Wyniki badań
-- Wizyty i dokumenty
-- Ubezpieczenie zdrowotne
+**Finanse**
+Bank statements, invoices, bills, receipts, payslips, tax returns (PIT/VAT/CIT), transfer confirmations, expense reports, loan documents.
 
-## 4. Dom i administracja
-- Mieszkanie
-- Urząd i pisma
-- Ubezpieczenia
-- Transport
+**Zdrowie**
+Medical test results, lab reports, prescriptions, doctor's referrals, medical visit summaries, health insurance documents, vaccination records.
 
-## 5. Podróże
-- Rezerwacje
-- Bilety
-- Plany podróży
+**Dom**
+Rental and purchase agreements, utility bills (electricity, gas, water, internet), official government letters, administrative decisions, property documents, home/car insurance policies, vehicle registration.
 
-## 6. Rozrywka i media
-- Filmy
-- Muzyka
-- Książki
-- Gry
+**Podróże**
+Flight tickets, boarding passes, hotel and travel reservations, travel itineraries, visa documents, travel insurance.
 
-## 7. Zdjęcia i wspomnienia
-- Podróże
-- Rodzina
-- Screeny
-- Do posortowania
+**Zakupy**
+Purchase confirmations, shop receipts, warranty cards, product manuals and instruction booklets, return and refund documents.
 
-## 8. Technologia i projekty
-- Kod i skrypty
-- IoT i elektronika
-- 3D printing
-- Dokumentacja techniczna
+**Edukacja**
+Course materials, lecture notes, textbooks, ebooks, scientific articles, research papers, study guides — any learning-related content.
 
-## 9. Zakupy i gwarancje
-- Potwierdzenia zakupu
-- Gwarancje
-- Instrukcje
-- Zwroty
+**Technologia**
+Source code, scripts, technical documentation, electronic schematics, 3D print files, configuration files, developer guides.
 
-## 10. Edukacja i materiały
-- Kursy
-- Notatki
-- PDF i ebooki
-- Research
+**Zdjęcia**
+Photos of people, places, events, nature, or scenery. Only use this for actual photographs — NOT for photos of documents (those go to their respective category based on content).
 
-## 11. Osobiste
-- Ważne dokumenty
-- Notatki
-- Archiwum
+**Multimedia**
+Movies, music files, video recordings, podcasts, games, entertainment ebooks.
 
-## 12. Do przejrzenia
-- Niepewne
-- Duplikaty
-- Do ręcznego opisu
+**Osobiste**
+Identity documents (ID card, passport, birth certificate), personal notes, private correspondence, family documents, archival personal files.
+
+**Do przejrzenia**
+Files that cannot be confidently classified into any of the above categories, duplicates, or files requiring manual review.
 
 ---
 
 ## Rules for AI
 
-1. Always select ONE main category.
-2. Select subcategory only if confidence is sufficient.
-3. Do NOT invent new categories.
-4. Prefer practical usability over theoretical correctness.
+1. Always select exactly ONE category from the list above.
+2. Base classification on **content**, not file extension or filename.
+3. For images: classify by what is depicted, not by the fact that it is a photo.
+4. Do NOT invent new categories.
+5. When in doubt → use `Do przejrzenia`.
