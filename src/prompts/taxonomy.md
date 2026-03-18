@@ -16,7 +16,7 @@ Bank statements, invoices, bills, receipts, payslips, tax returns (PIT/VAT/CIT),
 **Zdrowie**
 Medical test results, lab reports, prescriptions, doctor's referrals, medical visit summaries, health insurance documents, vaccination records.
 
-**Dom**
+**Admin**
 Rental and purchase agreements, utility bills (electricity, gas, water, internet), official government letters, administrative decisions, property documents, home/car insurance policies, vehicle registration.
 
 **Podróże**

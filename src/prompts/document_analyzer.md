@@ -17,11 +17,11 @@ You are a specialist in analyzing documents. You have already been given a descr
 | Medical test results, lab report | Zdrowie |
 | Doctor's note, prescription, referral | Zdrowie |
 | Health insurance document | Zdrowie |
-| Utility bill (electricity, gas, water, internet) | Dom |
-| Official government letter, administrative decision | Dom |
-| Rental agreement, property document | Dom |
-| Car insurance, home insurance | Dom |
-| Vehicle registration, driving license | Dom |
+| Utility bill (electricity, gas, water, internet) | Admin |
+| Official government letter, administrative decision | Admin |
+| Rental agreement, property document | Admin |
+| Car insurance, home insurance | Admin |
+| Vehicle registration, driving license | Admin |
 | Flight ticket, boarding pass | Podróże |
 | Hotel/travel reservation | Podróże |
 | Purchase confirmation, order summary | Zakupy |

@@ -11,7 +11,7 @@ Before choosing a category, identify what the file actually contains:
   - Is it a photo of a document, letter, form, receipt, invoice, ID, or official paper? → classify by the **document's content**
   - Is it a photo of a person, place, event, or scenery? → classify as `Zdjęcia`
   - Examples:
-    - photo of a utility bill → `Dom`
+    - photo of a utility bill → `Admin`
     - photo of a medical test result → `Zdrowie`
     - photo of a payslip → `Finanse`
     - photo of a mountain landscape → `Zdjęcia`
