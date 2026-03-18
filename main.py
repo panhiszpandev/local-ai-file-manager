@@ -47,7 +47,8 @@ def main() -> None:
         label = "DIR " if file_info.is_dir else "FILE"
         print(f"  [{label}] {file_info.path.relative_to(root)}", end=" ... ", flush=True)
         result = classifier.classify(file_info, root)
-        print(f"{result.category}/{result.subcategory} → {result.action}")
+        alt = f" (alt: {result.alternative_category}/{result.alternative_subcategory})" if result.alternative_category else ""
+        print(f"{result.category}/{result.subcategory} [{result.confidence:.0%}]{alt} → {result.action}")
         results.append(result)
 
     count = write_csv(results, args.output)
