@@ -64,6 +64,13 @@ class Classifier:
 
         raw = response.choices[0].message.content.strip()
 
+        # strip markdown code block if model wrapped the JSON
+        if raw.startswith("```"):
+            raw = raw.split("```", 2)[1]
+            if raw.startswith("json"):
+                raw = raw[4:]
+            raw = raw.strip()
+
         try:
             data = json.loads(raw)
         except json.JSONDecodeError:
