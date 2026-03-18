@@ -17,12 +17,11 @@ class FileInfo:
 @dataclass
 class ClassificationResult:
     file_info: FileInfo
+    visual_content: Optional[str]
     file_type: str
     category: str
-    subcategory: str
     confidence: float
     alternative_category: Optional[str]
-    alternative_subcategory: Optional[str]
     suggested_name: str
     suggested_path: Path
     action: str  # "rename" | "move" | "rename+move" | "none"
