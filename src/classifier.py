@@ -64,6 +64,13 @@ class Classifier:
 
         raw = response.choices[0].message.content.strip()
 
+        # strip markdown code block if model wrapped the JSON
+        if raw.startswith("```"):
+            raw = raw.split("```", 2)[1]
+            if raw.startswith("json"):
+                raw = raw[4:]
+            raw = raw.strip()
+
         try:
             data = json.loads(raw)
         except json.JSONDecodeError:
@@ -81,6 +88,9 @@ class Classifier:
             file_type=data.get("file_type", file_info.extension),
             category=data.get("category", "Do przejrzenia"),
             subcategory=data.get("subcategory", "Niepewne"),
+            confidence=float(data.get("confidence", 0.0)),
+            alternative_category=data.get("alternative_category"),
+            alternative_subcategory=data.get("alternative_subcategory"),
             suggested_name=data.get("suggested_name", file_info.name),
             suggested_path=scan_root / data.get("suggested_path", ""),
             action=data.get("action", "none"),

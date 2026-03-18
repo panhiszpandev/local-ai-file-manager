@@ -1,5 +1,6 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
 
 @dataclass
@@ -19,6 +20,9 @@ class ClassificationResult:
     file_type: str
     category: str
     subcategory: str
+    confidence: float
+    alternative_category: Optional[str]
+    alternative_subcategory: Optional[str]
     suggested_name: str
     suggested_path: Path
     action: str  # "rename" | "move" | "rename+move" | "none"

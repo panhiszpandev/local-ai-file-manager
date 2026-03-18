@@ -80,5 +80,4 @@ AI MUST choose from this list only. If uncertain, use: `Do przejrzenia/Niepewne`
 1. Always select ONE main category.
 2. Select subcategory only if confidence is sufficient.
 3. Do NOT invent new categories.
-4. If confidence < threshold → use: Do przejrzenia/Niepewne.
-5. Prefer practical usability over theoretical correctness.
+4. Prefer practical usability over theoretical correctness.
