@@ -3,6 +3,31 @@
 ## Local overrides
 A `CLAUDE.local.md` file may exist alongside this file for private, machine-local settings (not committed to git). Always load it if present — it takes precedence over this file.
 
+## Commit message policy
+- Use the `type: short description` format
+- Allowed types: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`
+- Body (optional) explains the *why*, not the *what*
+- No co-author lines, no AI attribution
+
+### Branching & merging
+- Changes to `src/` and `main.py` go through **pull requests** — no direct pushes to `main`
+- Documentation and config files (`CLAUDE.md`, `requirements.txt`, `.gitignore`, etc.) may be pushed directly to `main`
+- PRs are merged using **squash merge**
+- The squash commit uses the dominant type of the PR with a summary title
+- The body lists the individual commits that made up the PR:
+
+```
+feat: confidence scoring and classification fixes
+
+- feat: add confidence score and alternative category to classification
+- feat: add confidence and alternative category columns to CSV output
+- feat: show confidence and alternative category in CLI logs
+- fix: strip markdown code block from LLM JSON response
+- fix: remove undefined threshold rule from taxonomy
+```
+
+- Branch names should be short and descriptive (e.g. `threshold-experiment`, `pdf-support`)
+
 ## Language policy
 - All documentation, comments, code identifiers, prompts, and any text not directly representing user data (e.g. file names, paths) must be written in **English**
 - CSV column names and values that are not user-provided data (e.g. category names, action types) must also be in **English**
