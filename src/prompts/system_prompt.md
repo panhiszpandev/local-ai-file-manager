@@ -17,10 +17,16 @@ Respond ONLY with a valid JSON object using this exact structure:
   "file_type": "<extension or 'directory'>",
   "category": "<top-level category>",
   "subcategory": "<subcategory>",
+  "confidence": <float 0.0–1.0>,
+  "alternative_category": "<second best category or null>",
+  "alternative_subcategory": "<second best subcategory or null>",
   "suggested_name": "<new filename with extension>",
   "suggested_path": "<relative path from scan root, e.g. Kariera/CV i profile>",
   "action": "<none|rename|move|rename+move>"
 }
 ```
+
+- `confidence` — your confidence in the chosen category (1.0 = certain, 0.0 = no idea)
+- `alternative_category` — best runner-up category if confidence < 0.9, otherwise null
 
 No explanation, no markdown wrapper — raw JSON only.
