@@ -58,18 +58,18 @@ feat: improve image and PDF classification accuracy
 
 ## What the app does (v0.1.0)
 1. Takes a `path` as a CLI argument
-2. Recursively scans the given path — all subdirectories (all levels deep) and all files
+2. Recursively scans the given path — all subdirectories (all levels deep) and all files (hidden files are skipped)
 3. Reads file metadata
-4. Classifies each file by: file type, category, and subcategory (category list will be expanded over time)
+4. Classifies each file by type and category (single-level taxonomy, no subcategories)
 5. Generates a CSV file with the result: old path, new path, old name, new name, target directory
 
 ## File classification — local LLM
-Classification of files and directories (type, category, subcategory) is performed by a **local LLM running in LM Studio**.
-- Model: **Qwen2.5 7B Vision**
-- LM Studio exposes a local OpenAI-compatible API
-- The app communicates with the LLM via this API
-- No internet connection or external AI services required
-- Thanks to Vision, the model can analyze image file contents directly (not just metadata)
+Classification is performed by a **local LLM running in LM Studio** in up to two steps:
+- **Step 1 (all files):** main classifier sends file metadata + image (if applicable) to the LLM, which returns `visual_content` description and a category
+- **Step 2 (images only, when visual_content suggests a document):** a specialized document analyzer makes a second vision call with a focused prompt and document-type table to refine the category
+- If confidence < 90%, the file is classified as `Do przejrzenia` regardless of the suggested category
+- Model: **Qwen2.5 7B Vision** — OpenAI-compatible API, works offline, supports image analysis
+- Unsupported file formats (e.g. HEIC) fall back to `Do przejrzenia`
 
 ## CRITICAL — file operation safety rule
 
@@ -85,15 +85,16 @@ Any future action modifying the filesystem (rename, move, delete, etc.) MUST:
 This rule is a core principle of the app and must not be skipped in any version.
 
 ## CSV output format
-Columns (to be refined after initial tests):
 - `old_path` — original full path
 - `new_path` — proposed new full path
 - `old_name` — original file/directory name
 - `new_name` — proposed new name
+- `visual_content` — LLM description of image content (images only)
 - `file_type` — file type (extension)
-- `category` — category (e.g. images, documents, code, …)
-- `subcategory` — subcategory (to be refined)
-- `action` — proposed action (rename / move / rename+move)
+- `category` — assigned category from taxonomy
+- `confidence` — LLM confidence score (0.00–1.00)
+- `alternative_category` — second best category if confidence < 0.9
+- `action` — proposed action (rename / move / rename+move / none)
 - `size_bytes` — file size in bytes
 - `is_dir` — whether the entry is a directory
 
@@ -101,6 +102,7 @@ Columns (to be refined after initial tests):
 ```
 local-ai-file-manager/
 ├── CLAUDE.md
+├── CLAUDE.local.md           # private local settings (not committed)
 ├── README.md
 ├── requirements.txt          # openai>=1.0.0
 ├── .gitignore
@@ -108,9 +110,16 @@ local-ai-file-manager/
 └── src/
     ├── __init__.py
     ├── models.py             # dataclasses: FileInfo, ClassificationResult
-    ├── scanner.py            # rglob, reads stat()
-    ├── classifier.py         # LM Studio API + vision for images
-    └── csv_writer.py         # CSV output
+    ├── scanner.py            # rglob, reads stat(), skips hidden files
+    ├── classifier.py         # orchestrates classification pipeline
+    ├── document_analyzer.py  # specialized second-step vision classifier for documents
+    ├── image_utils.py        # image encoding, user message builder
+    ├── utils.py              # shared utilities (strip_markdown)
+    ├── csv_writer.py         # CSV output
+    └── prompts/
+        ├── system_prompt.md      # main LLM system prompt
+        ├── taxonomy.md           # single-level category taxonomy
+        └── document_analyzer.md  # document specialist prompt
 ```
 
 ## Running the app
@@ -125,13 +134,12 @@ python main.py /path/to/folder --output result.csv
 
 ## Project status
 - **v0.1.0 — in progress**
-- Skeleton code ready (scanner, classifier, csv_writer, main)
-- No real-data tests yet — planned for the next session
-- Category/subcategory list to be refined after initial tests
+- Core pipeline working and tested on real data
+- Two-step document classification implemented
+- Single-level taxonomy in place (12 categories)
 - GitHub: https://github.com/panhiszpandev/local-ai-file-manager (branch: main, SSH)
 
 ## TODO for next sessions
-- [ ] Tests on a real folder
-- [ ] Refine category and subcategory list
+- [ ] PDF content extraction (e.g. `pypdf`) to improve classification of PDFs
 - [ ] Error handling for LM Studio connection issues (timeout, model unavailable)
 - [ ] Possible: add `--dry-run` flag vs execution mode in the future
