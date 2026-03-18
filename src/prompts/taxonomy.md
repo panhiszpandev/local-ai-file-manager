@@ -52,3 +52,4 @@ Files that cannot be confidently classified into any of the above categories, du
 3. For images: classify by what is depicted, not by the fact that it is a photo.
 4. Do NOT invent new categories.
 5. When in doubt → use `Do przejrzenia`.
+6. Set `confidence` honestly — if you are not at least 90% certain, use `Do przejrzenia` and reflect that in a low confidence score.

@@ -72,12 +72,17 @@ class Classifier:
                 data["category"] = doc["category"]
                 data["confidence"] = doc.get("confidence", data.get("confidence", 0.0))
 
+        confidence = float(data.get("confidence", 0.0))
+        category = data.get("category", "Do przejrzenia")
+        if confidence < 0.9:
+            category = "Do przejrzenia"
+
         return ClassificationResult(
             file_info=file_info,
             visual_content=visual_content,
             file_type=data.get("file_type", file_info.extension),
-            category=data.get("category", "Do przejrzenia"),
-            confidence=float(data.get("confidence", 0.0)),
+            category=category,
+            confidence=confidence,
             alternative_category=data.get("alternative_category"),
             suggested_name=data.get("suggested_name", file_info.name),
             suggested_path=scan_root / (data.get("suggested_path") or ""),
