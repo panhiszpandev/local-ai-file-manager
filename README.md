@@ -1,20 +1,19 @@
 # local-ai-file-manager
 
-A local CLI tool that scans a directory, classifies files using a local vision LLM, and generates a CSV with proposed file reorganization — without touching any files.
+A local CLI tool that scans a directory, analyzes files using a local LLM agent with tool calling, and generates a CSV with summaries, categories, and suggested filenames — without touching any files.
 
 ## How it works
 
-1. Recursively scans a given directory (hidden files are skipped)
-2. For each file, sends metadata (and image content if applicable) to a local LLM
-3. LLM classifies the file into one of 12 categories
-4. For images that appear to contain documents, a specialized second vision call refines the category
-5. If confidence < 90%, the file is assigned to `Do przejrzenia` (review queue)
-6. Outputs a CSV with proposed changes — no files are ever modified
+1. Recursively scans a given directory (hidden files/dirs are skipped)
+2. Writes a CSV with all discovered files (status: `NEW`)
+3. For each file, an LLM agent autonomously selects tools to read and analyze the content
+4. Agent returns a summary, category, and suggested filename
+5. CSV is updated per file (`DONE` or `FAILED`) — resumable on interrupt
 
 ## Requirements
 
 - Python 3.9+
-- [LM Studio](https://lmstudio.ai/) running locally with **Qwen2.5 7B Vision** (or compatible vision model)
+- [LM Studio](https://lmstudio.ai/) running locally with **GLM-4.7-Flash** (or compatible model with tool calling and vision support)
 
 ## Installation
 
@@ -35,25 +34,35 @@ python main.py /path/to/folder --output result.csv
 | Flag | Default | Description |
 |---|---|---|
 | `--output`, `-o` | `result.csv` | Output CSV file path |
-| `--lm-url` | `http://localhost:1234/v1` | LM Studio API base URL |
-| `--model` | `qwen2.5-7b-instruct` | Model name as shown in LM Studio |
+| `--lm-url` | `http://127.0.0.1:1234/v1` | LM Studio API base URL |
+| `--model` | `glm-4.7-flash` | Model name as shown in LM Studio |
+
+Defaults can be overridden with environment variables `LLM_BASE_URL` and `LLM_MODEL` (or a `.env` file).
+
+## Agent tools
+
+The agent has 4 tools it can call autonomously based on file type:
+
+| Tool | Purpose |
+|---|---|
+| `get_file_info` | File metadata (size, dates, MIME type) |
+| `read_text` | Text extraction (txt, md, csv, html, docx, rtf) |
+| `read_pdf` | PDF text extraction (text-based + scanned OCR via vision) |
+| `read_image` | Image analysis via vision model |
 
 ## Output CSV columns
 
 | Column | Description |
 |---|---|
-| `old_path` | Original full path |
-| `new_path` | Proposed new full path |
-| `old_name` | Original filename |
-| `new_name` | Proposed new filename |
-| `visual_content` | LLM description of image content (images only) |
-| `file_type` | File extension |
-| `category` | Assigned category |
-| `confidence` | LLM confidence score (0.00–1.00) |
-| `alternative_category` | Runner-up category when confidence < 0.9 |
-| `action` | Proposed action: `rename`, `move`, `rename+move`, or `none` |
+| `path` | Original absolute path |
+| `name` | Original filename |
+| `extension` | File extension |
 | `size_bytes` | File size in bytes |
-| `is_dir` | Whether the entry is a directory |
+| `status` | Processing status: `NEW`, `DONE`, or `FAILED` |
+| `summary` | LLM-generated summary of file contents |
+| `category` | Assigned category from taxonomy |
+| `suggested_name` | Proposed descriptive filename |
+| `error` | Error description (only for `FAILED` files) |
 
 ## Categories
 
@@ -82,15 +91,19 @@ python main.py /path/to/folder --output result.csv
 local-ai-file-manager/
 ├── main.py                   # CLI entry point
 └── src/
-    ├── models.py             # FileInfo, ClassificationResult dataclasses
-    ├── scanner.py            # recursive file scanner
-    ├── classifier.py         # main classification pipeline
-    ├── document_analyzer.py  # specialized document vision classifier
-    ├── image_utils.py        # image encoding utilities
+    ├── models.py             # FileRecord dataclass (maps to CSV row)
+    ├── llm_client.py         # LLM client wrapper with tool calling support
+    ├── agent.py              # Agent: tool-calling loop per file
+    ├── scanner.py            # directory scanner, writes initial CSV
+    ├── csv_manager.py        # CSV read/write/update with status tracking
     ├── utils.py              # shared utilities
-    ├── csv_writer.py         # CSV output
+    ├── tools/
+    │   ├── __init__.py       # tool registry (definitions + dispatch)
+    │   ├── get_file_info.py  # file metadata (size, dates, MIME type)
+    │   ├── read_text.py      # text extraction (txt, docx, md, html, rtf)
+    │   ├── read_pdf.py       # PDF text extraction (text-based + scanned OCR)
+    │   └── read_image.py     # image analysis via vision model
     └── prompts/
-        ├── system_prompt.md      # main LLM system prompt
-        ├── taxonomy.md           # category taxonomy
-        └── document_analyzer.md  # document specialist prompt
+        ├── agent_system.md   # agent system prompt
+        └── taxonomy.md       # single-level category taxonomy
 ```

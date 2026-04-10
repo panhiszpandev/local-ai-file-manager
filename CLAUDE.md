@@ -56,20 +56,22 @@ feat: improve image and PDF classification accuracy
 - **v0.1.0** — local app, everything runs on a single machine
 - **future** — client-server architecture (split into server and client applications)
 
-## What the app does (v0.1.0)
+## What the app does (v0.2.0)
 1. Takes a `path` as a CLI argument
-2. Recursively scans the given path — all subdirectories (all levels deep) and all files (hidden files are skipped)
-3. Reads file metadata
-4. Classifies each file by type and category (single-level taxonomy, no subcategories)
-5. Generates a CSV file with the result: old path, new path, old name, new name, target directory
+2. Recursively scans the given path — all files (hidden files/dirs are skipped)
+3. Writes a CSV file with all discovered files (status: `NEW`)
+4. For each `NEW` file, an LLM agent autonomously selects tools to read and analyze the file
+5. Agent returns: summary, category, suggested filename
+6. CSV is updated per file (status: `DONE` or `FAILED`) — resumable on interrupt
 
-## File classification — local LLM
-Classification is performed by a **local LLM running in LM Studio** in up to two steps:
-- **Step 1 (all files):** main classifier sends file metadata + image (if applicable) to the LLM, which returns `visual_content` description and a category
-- **Step 2 (images only, when visual_content suggests a document):** a specialized document analyzer makes a second vision call with a focused prompt and document-type table to refine the category
-- If confidence < 90%, the file is classified as `Do przejrzenia` regardless of the suggested category
-- Model: **Qwen2.5 7B Vision** — OpenAI-compatible API, works offline, supports image analysis
-- Unsupported file formats (e.g. HEIC) fall back to `Do przejrzenia`
+## File analysis — LLM agent with tool calling
+Analysis is performed by an **LLM agent running in LM Studio** using **function calling**:
+- The agent has 4 tools: `get_file_info`, `read_text`, `read_pdf`, `read_image`
+- The agent autonomously decides which tools to call based on the file type
+- `read_pdf` detects whether a PDF is text-based or scanned (falls back to vision OCR)
+- `read_image` sends images to the vision model for content description
+- Model: **GLM-4.7-Flash** — OpenAI-compatible API, works offline, supports tool calling and vision
+- Unsupported file formats result in status `FAILED` with error description
 
 ## CRITICAL — file operation safety rule
 
@@ -85,18 +87,15 @@ Any future action modifying the filesystem (rename, move, delete, etc.) MUST:
 This rule is a core principle of the app and must not be skipped in any version.
 
 ## CSV output format
-- `old_path` — original full path
-- `new_path` — proposed new full path
-- `old_name` — original file/directory name
-- `new_name` — proposed new name
-- `visual_content` — LLM description of image content (images only)
-- `file_type` — file type (extension)
-- `category` — assigned category from taxonomy
-- `confidence` — LLM confidence score (0.00–1.00)
-- `alternative_category` — second best category if confidence < 0.9
-- `action` — proposed action (rename / move / rename+move / none)
+- `path` — original absolute path
+- `name` — original filename
+- `extension` — file extension
 - `size_bytes` — file size in bytes
-- `is_dir` — whether the entry is a directory
+- `status` — processing status: `NEW` | `DONE` | `FAILED`
+- `summary` — LLM-generated summary of file contents
+- `category` — assigned category from taxonomy
+- `suggested_name` — proposed descriptive filename
+- `error` — error description (only for `FAILED` files)
 
 ## Project structure
 ```
@@ -104,22 +103,26 @@ local-ai-file-manager/
 ├── CLAUDE.md
 ├── CLAUDE.local.md           # private local settings (not committed)
 ├── README.md
-├── requirements.txt          # openai>=1.0.0
+├── requirements.txt          # openai, pypdf, python-docx, striprtf
 ├── .gitignore
-├── main.py                   # entry point, argparse CLI
+├── main.py                   # CLI entry point
 └── src/
     ├── __init__.py
-    ├── models.py             # dataclasses: FileInfo, ClassificationResult
-    ├── scanner.py            # rglob, reads stat(), skips hidden files
-    ├── classifier.py         # orchestrates classification pipeline
-    ├── document_analyzer.py  # specialized second-step vision classifier for documents
-    ├── image_utils.py        # image encoding, user message builder
+    ├── models.py             # FileRecord dataclass (maps to CSV row)
+    ├── llm_client.py         # LLM client wrapper with tool calling support
+    ├── agent.py              # Agent: tool-calling loop per file
+    ├── scanner.py             # directory scanner, writes initial CSV
+    ├── csv_manager.py        # CSV read/write/update with status tracking
     ├── utils.py              # shared utilities (strip_markdown)
-    ├── csv_writer.py         # CSV output
+    ├── tools/
+    │   ├── __init__.py       # tool registry (definitions + dispatch)
+    │   ├── get_file_info.py  # file metadata (size, dates, MIME type)
+    │   ├── read_text.py      # text extraction (txt, docx, md, html, rtf)
+    │   ├── read_pdf.py       # PDF text extraction (text-based + scanned OCR)
+    │   └── read_image.py     # image analysis via vision model
     └── prompts/
-        ├── system_prompt.md      # main LLM system prompt
-        ├── taxonomy.md           # single-level category taxonomy
-        └── document_analyzer.md  # document specialist prompt
+        ├── agent_system.md   # agent system prompt
+        └── taxonomy.md       # single-level category taxonomy
 ```
 
 ## Running the app
@@ -129,17 +132,19 @@ python main.py /path/to/folder --output result.csv
 
 # optional flags:
 # --lm-url  http://localhost:1234/v1   (default LM Studio address)
-# --model   qwen2.5-7b-instruct        (model name in LM Studio)
+# --model   glm-4.7-flash              (model name in LM Studio)
 ```
 
 ## Project status
-- **v0.1.0 — in progress**
-- Core pipeline working and tested on real data
-- Two-step document classification implemented
+- **v0.2.0 — in progress**
+- Agent-based architecture with tool calling
+- PDF text extraction + scanned PDF OCR via vision
+- Text file extraction (txt, docx, md, html, rtf)
+- Image analysis via vision model
+- Resumable CSV pipeline (NEW/DONE/FAILED statuses)
 - Single-level taxonomy in place (12 categories)
 - GitHub: https://github.com/panhiszpandev/local-ai-file-manager (branch: main, SSH)
 
 ## TODO for next sessions
-- [ ] PDF content extraction (e.g. `pypdf`) to improve classification of PDFs
 - [ ] Error handling for LM Studio connection issues (timeout, model unavailable)
 - [ ] Possible: add `--dry-run` flag vs execution mode in the future
