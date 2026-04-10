@@ -1,17 +1,15 @@
 from pathlib import Path
 
+from src.db_manager import get_existing_paths, upsert_records
 from src.models import FileRecord
-from src.csv_manager import read_records, write_records
 
 
-def scan(root: Path, output_csv: Path) -> list[FileRecord]:
-    """Scan directory recursively and write/update CSV with discovered files.
+def scan(root: Path) -> list[FileRecord]:
+    """Scan directory recursively and insert new files into the database.
 
-    If CSV already exists, only new files (not yet in CSV) are added.
-    Returns the full list of records.
+    Already-known paths are skipped. Returns the list of newly added records.
     """
-    existing = read_records(output_csv)
-    existing_paths = {r.path for r in existing}
+    existing_paths = get_existing_paths()
 
     new_records = []
     for entry in root.rglob("*"):
@@ -36,6 +34,7 @@ def scan(root: Path, output_csv: Path) -> list[FileRecord]:
             size_bytes=stat.st_size,
         ))
 
-    all_records = existing + new_records
-    write_records(output_csv, all_records)
-    return all_records
+    if new_records:
+        upsert_records(new_records)
+
+    return new_records
