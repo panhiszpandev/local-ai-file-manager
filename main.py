@@ -5,12 +5,6 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from src.agent import Agent
-from src.csv_manager import read_pending, update_record
-from src.llm_client import LLMClient
-from src.scanner import scan
-from src.tools import init_tools
-
 load_dotenv()
 
 
@@ -18,7 +12,11 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Scan a directory, analyze files with an LLM agent, and output a CSV with results."
     )
-    parser.add_argument("path", type=Path, help="Root directory to scan")
+    parser.add_argument("path", type=Path, nargs="?", help="Root directory to scan (required in CLI mode)")
+    parser.add_argument(
+        "--cli", action="store_true",
+        help="Run in CLI mode instead of GUI"
+    )
     parser.add_argument(
         "--output", "-o", type=Path, default=Path("result.csv"),
         help="Output CSV file path (default: result.csv)"
@@ -34,8 +32,13 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main() -> None:
-    args = parse_args()
+def run_cli(args: argparse.Namespace) -> None:
+    from src.agent import Agent
+    from src.csv_manager import update_record
+    from src.llm_client import LLMClient
+    from src.scanner import scan
+    from src.tools import init_tools
+
     root = args.path.resolve()
 
     if not root.exists():
@@ -46,7 +49,6 @@ def main() -> None:
         print(f"Error: path '{root}' is not a directory.", file=sys.stderr)
         sys.exit(1)
 
-    # Step 1: Scan directory and create/update CSV
     print(f"Scanning: {root}")
     all_records = scan(root, args.output)
     pending = [r for r in all_records if r.status == "NEW"]
@@ -57,12 +59,10 @@ def main() -> None:
         print("Nothing to process.")
         return
 
-    # Step 2: Initialize LLM and agent
     llm = LLMClient(base_url=args.lm_url, model=args.model)
     init_tools(llm)
     agent = Agent(llm)
 
-    # Step 3: Process each pending file
     for i, record in enumerate(pending, 1):
         print(f"  [{i}/{len(pending)}] {record.name}", end=" ... ", flush=True)
 
@@ -83,8 +83,26 @@ def main() -> None:
         else:
             print(f"FAILED: {result.error}")
 
-    done = sum(1 for r in all_records if r.status != "NEW" or r in pending)
     print(f"\nDone. Results saved to: {args.output}")
+
+
+def run_gui() -> None:
+    from src.gui.app import App
+
+    app = App()
+    sys.exit(app.run())
+
+
+def main() -> None:
+    args = parse_args()
+
+    if args.cli:
+        if not args.path:
+            print("Error: path is required in CLI mode.", file=sys.stderr)
+            sys.exit(1)
+        run_cli(args)
+    else:
+        run_gui()
 
 
 if __name__ == "__main__":
