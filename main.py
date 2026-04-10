@@ -10,16 +10,12 @@ load_dotenv()
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Scan a directory, analyze files with an LLM agent, and output a CSV with results."
+        description="Scan a directory, analyze files with an LLM agent, and output results."
     )
     parser.add_argument("path", type=Path, nargs="?", help="Root directory to scan (required in CLI mode)")
     parser.add_argument(
         "--cli", action="store_true",
         help="Run in CLI mode instead of GUI"
-    )
-    parser.add_argument(
-        "--output", "-o", type=Path, default=Path("result.csv"),
-        help="Output CSV file path (default: result.csv)"
     )
     parser.add_argument(
         "--lm-url", default=os.getenv("LLM_BASE_URL", "http://127.0.0.1:1234/v1"),
@@ -34,7 +30,7 @@ def parse_args() -> argparse.Namespace:
 
 def run_cli(args: argparse.Namespace) -> None:
     from src.agent import Agent
-    from src.csv_manager import update_record
+    from src.db_manager import get_pending, update_record
     from src.llm_client import LLMClient
     from src.scanner import scan
     from src.tools import init_tools
@@ -50,10 +46,9 @@ def run_cli(args: argparse.Namespace) -> None:
         sys.exit(1)
 
     print(f"Scanning: {root}")
-    all_records = scan(root, args.output)
-    pending = [r for r in all_records if r.status == "NEW"]
-    total = len(all_records)
-    print(f"Found {total} files ({len(pending)} pending analysis)")
+    new_records = scan(root)
+    pending = get_pending()
+    print(f"Found {len(new_records)} new files ({len(pending)} pending analysis)")
 
     if not pending:
         print("Nothing to process.")
@@ -76,14 +71,14 @@ def run_cli(args: argparse.Namespace) -> None:
             record.error = str(e)
             result = record
 
-        update_record(args.output, result)
+        update_record(result)
 
         if result.status == "DONE":
             print(f"{result.category} -> {result.suggested_name}")
         else:
             print(f"FAILED: {result.error}")
 
-    print(f"\nDone. Results saved to: {args.output}")
+    print(f"\nDone. Results saved to: ~/.aifilemanager/files.db")
 
 
 def run_gui() -> None:
