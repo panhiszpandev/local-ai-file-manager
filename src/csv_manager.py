@@ -51,6 +51,8 @@ def read_records(csv_path: Path) -> list[FileRecord]:
         return []
     with open(csv_path, "r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
+        if reader.fieldnames != FIELDNAMES:
+            return []
         return [_row_to_record(row) for row in reader]
 
 
