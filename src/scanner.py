@@ -1,25 +1,41 @@
-import os
 from pathlib import Path
-from typing import Iterator
 
-from src.models import FileInfo
+from src.models import FileRecord
+from src.csv_manager import read_records, write_records
 
 
-def scan(root: Path) -> Iterator[FileInfo]:
+def scan(root: Path, output_csv: Path) -> list[FileRecord]:
+    """Scan directory recursively and write/update CSV with discovered files.
+
+    If CSV already exists, only new files (not yet in CSV) are added.
+    Returns the full list of records.
+    """
+    existing = read_records(output_csv)
+    existing_paths = {r.path for r in existing}
+
+    new_records = []
     for entry in root.rglob("*"):
-        if entry.name.startswith("."):
+        if any(part.startswith(".") for part in entry.relative_to(root).parts):
             continue
+        if entry.is_dir():
+            continue
+
+        path_str = str(entry)
+        if path_str in existing_paths:
+            continue
+
         try:
             stat = entry.stat()
         except (PermissionError, OSError):
             continue
 
-        yield FileInfo(
-            path=entry,
+        new_records.append(FileRecord(
+            path=path_str,
             name=entry.name,
-            extension=entry.suffix.lower() if not entry.is_dir() else "",
+            extension=entry.suffix.lower(),
             size_bytes=stat.st_size,
-            created_at=stat.st_birthtime,
-            modified_at=stat.st_mtime,
-            is_dir=entry.is_dir(),
-        )
+        ))
+
+    all_records = existing + new_records
+    write_records(output_csv, all_records)
+    return all_records
